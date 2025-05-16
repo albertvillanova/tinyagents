@@ -6,7 +6,7 @@ from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
 
-SYSTEM_PROMPT = """You are a helpful assistant that can that can solve any task using Python code blobs.
+SYSTEM_PROMPT = """You are a helpful assistant that can solve any task using Python code blobs.
 
 Additionally, you can call the following Python functions:
 {tools}
