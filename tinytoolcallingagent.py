@@ -77,6 +77,18 @@ class TinyToolCallingAgent:
 
     async def process_query(self, query: str) -> str:
         """Process a query using model and available tools"""
+        # List available tools
+        response = await self.mcp_client_session.list_tools()
+        tools = [{
+            "type": "function",
+            "function": {
+                "name": tool.name,
+                "description": tool.description,
+                "parameters": tool.inputSchema
+            }
+        } for tool in response.tools]
+
+        # Create messages
         messages = [
             {
                 "role": "system",
@@ -88,18 +100,8 @@ class TinyToolCallingAgent:
             },
         ]
 
-        response = await self.mcp_client_session.list_tools()
-        available_tools = [{
-            "type": "function",
-            "function": {
-                "name": tool.name,
-                "description": tool.description,
-                "parameters": tool.inputSchema
-            }
-        } for tool in response.tools]
-
-        # Initial model call
-        response = await self._call_model(messages, tools=available_tools)
+        # Initial model call with tools
+        response = await self._call_model(messages, tools=tools)
         # print("Initial response:", response)
 
         # Process response and handle tool calls

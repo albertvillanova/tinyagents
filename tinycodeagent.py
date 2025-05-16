@@ -77,8 +77,9 @@ class TinyCodeAgent:
 
     async def process_query(self, query: str) -> str:
         """Process a query using model and available tools"""
+        # List available tools
         response = await self.mcp_client_session.list_tools()
-        available_tools = [{
+        tools = [{
             "type": "function",
             "function": {
                 "name": tool.name,
@@ -86,8 +87,9 @@ class TinyCodeAgent:
                 "parameters": tool.inputSchema
             }
         } for tool in response.tools]
-        tools_str = "\n".join([f"{tool['function']['name']}: {tool['function']['description']}" for tool in available_tools])
+        tools_str = "\n".join([f"{tool['function']['name']}: {tool['function']['description']}" for tool in tools])
 
+        # Create messages
         messages = [
             {
                 "role": "system",
@@ -99,7 +101,7 @@ class TinyCodeAgent:
             },
         ]
 
-        # Initial model call
+        # Initial model call without tools
         response = await self._call_model(messages)
         # print("Initial response:", response)
 
