@@ -79,15 +79,13 @@ class TinyCodeAgent:
         """Process a query using model and available tools"""
         # List available tools
         response = await self.mcp_client_session.list_tools()
-        tools = [{
-            "type": "function",
-            "function": {
-                "name": tool.name,
-                "description": tool.description,
-                "parameters": tool.inputSchema
-            }
-        } for tool in response.tools]
-        tools_str = "\n".join([f"{tool['function']['name']}: {tool['function']['description']}" for tool in tools])
+        tools = [
+            {"name": tool.name, "description": tool.description, "parameters": tool.inputSchema}
+            for tool in response.tools
+        ]
+        tools_str = "\n".join(
+            [f"- {tool['name']}: {tool['description']}\n  Parameters: {tool['parameters']}" for tool in tools]
+        )
 
         # Create messages
         messages = [
