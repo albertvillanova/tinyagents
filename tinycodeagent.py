@@ -12,6 +12,7 @@ Additionally, you can call the following Python functions:
 {tools}
 """.strip()
 
+
 class TinyCodeAgent:
     def __init__(self):
         # Initialize MCP client session and (LLM) model
@@ -25,10 +26,7 @@ class TinyCodeAgent:
         """Initialize the model client"""
         from huggingface_hub import InferenceClient
 
-        return InferenceClient(
-            model="Qwen/Qwen2.5-Coder-32B-Instruct",
-            provider="hf-inference",
-        )
+        return InferenceClient(model="Qwen/Qwen2.5-Coder-32B-Instruct", provider="hf-inference")
 
     async def _call_model(self, messages):
         """Call the model with the given messages and tools.
@@ -37,13 +35,7 @@ class TinyCodeAgent:
             messages: List of messages to send to the model.
         """
         loop = asyncio.get_running_loop()
-        response = await loop.run_in_executor(
-            None,
-            lambda: self.model.chat_completion(
-                messages,
-                max_tokens=1000,
-            )
-        )
+        response = await loop.run_in_executor(None, lambda: self.model.chat_completion(messages, max_tokens=1000))
         return response
 
     async def connect_to_server(self, server_script_path: str):
@@ -52,17 +44,13 @@ class TinyCodeAgent:
         Args:
             server_script_path: Path to the server script (.py or .js)
         """
-        is_python = server_script_path.endswith('.py')
-        is_js = server_script_path.endswith('.js')
+        is_python = server_script_path.endswith(".py")
+        is_js = server_script_path.endswith(".js")
         if not (is_python or is_js):
             raise ValueError("Server script must be a .py or .js file")
 
         command = "python" if is_python else "node"
-        server_params = StdioServerParameters(
-            command=command,
-            args=[server_script_path],
-            env=None
-        )
+        server_params = StdioServerParameters(command=command, args=[server_script_path], env=None)
 
         stdio_transport = await self.exit_stack.enter_async_context(stdio_client(server_params))
         self.stdio, self.write = stdio_transport
@@ -89,14 +77,8 @@ class TinyCodeAgent:
 
         # Create messages
         messages = [
-            {
-                "role": "system",
-                "content": self.system_prompt.format(tools=tools_str),
-            },
-            {
-                "role": "user",
-                "content": query,
-            },
+            {"role": "system", "content": self.system_prompt.format(tools=tools_str)},
+            {"role": "user", "content": query},
         ]
 
         # Initial model call without tools
@@ -120,7 +102,7 @@ class TinyCodeAgent:
             try:
                 query = input("\nQuery: ").strip()
 
-                if query.lower() == 'quit':
+                if query.lower() == "quit":
                     break
 
                 response = await self.process_query(query)

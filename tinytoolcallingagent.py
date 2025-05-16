@@ -23,10 +23,7 @@ class TinyToolCallingAgent:
         """Initialize the model client"""
         from huggingface_hub import InferenceClient
 
-        return InferenceClient(
-            model="Qwen/Qwen2.5-Coder-32B-Instruct",
-            provider="hf-inference",
-        )
+        return InferenceClient(model="Qwen/Qwen2.5-Coder-32B-Instruct", provider="hf-inference")
 
     async def _call_model(self, messages, tools=None):
         """Call the model with the given messages and tools.
@@ -37,12 +34,7 @@ class TinyToolCallingAgent:
         """
         loop = asyncio.get_running_loop()
         response = await loop.run_in_executor(
-            None,
-            lambda: self.model.chat_completion(
-                messages,
-                max_tokens=1000,
-                tools=tools
-            )
+            None, lambda: self.model.chat_completion(messages, max_tokens=1000, tools=tools)
         )
         return response
 
@@ -52,17 +44,13 @@ class TinyToolCallingAgent:
         Args:
             server_script_path: Path to the server script (.py or .js)
         """
-        is_python = server_script_path.endswith('.py')
-        is_js = server_script_path.endswith('.js')
+        is_python = server_script_path.endswith(".py")
+        is_js = server_script_path.endswith(".js")
         if not (is_python or is_js):
             raise ValueError("Server script must be a .py or .js file")
 
         command = "python" if is_python else "node"
-        server_params = StdioServerParameters(
-            command=command,
-            args=[server_script_path],
-            env=None
-        )
+        server_params = StdioServerParameters(command=command, args=[server_script_path], env=None)
 
         stdio_transport = await self.exit_stack.enter_async_context(stdio_client(server_params))
         self.stdio, self.write = stdio_transport
@@ -79,25 +67,18 @@ class TinyToolCallingAgent:
         """Process a query using model and available tools"""
         # List available tools
         response = await self.mcp_client_session.list_tools()
-        tools = [{
-            "type": "function",
-            "function": {
-                "name": tool.name,
-                "description": tool.description,
-                "parameters": tool.inputSchema
+        tools = [
+            {
+                "type": "function",
+                "function": {"name": tool.name, "description": tool.description, "parameters": tool.inputSchema},
             }
-        } for tool in response.tools]
+            for tool in response.tools
+        ]
 
         # Create messages
         messages = [
-            {
-                "role": "system",
-                "content": self.system_prompt,
-            },
-            {
-                "role": "user",
-                "content": query,
-            },
+            {"role": "system", "content": self.system_prompt},
+            {"role": "user", "content": query},
         ]
 
         # Initial model call with tools
@@ -111,10 +92,7 @@ class TinyToolCallingAgent:
         message = response.choices[0].message
         if message.tool_calls:
             if message.content:
-                messages.append({
-                    "role": "assistant",
-                    "content": message.content
-                })
+                messages.append({"role": "assistant", "content": message.content})
             for tool_call in message.tool_calls:
                 tool_name = tool_call.function.name
                 tool_args = json.loads(tool_call.function.arguments)
@@ -123,10 +101,7 @@ class TinyToolCallingAgent:
                 tool_results.append({"call": tool_name, "result": result})
                 final_text.append(f"[Calling tool {tool_name} with args {tool_args}]")
                 # Continue conversation with tool results
-                messages.append({
-                    "role": "user",
-                    "content": result.content[0].text
-                })
+                messages.append({"role": "user", "content": result.content[0].text})
             # Get next response from model
             response = await self._call_model(messages)
             final_text.append(response.choices[0].message.content)
@@ -144,7 +119,7 @@ class TinyToolCallingAgent:
             try:
                 query = input("\nQuery: ").strip()
 
-                if query.lower() == 'quit':
+                if query.lower() == "quit":
                     break
 
                 response = await self.process_query(query)
