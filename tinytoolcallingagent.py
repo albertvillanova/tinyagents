@@ -17,6 +17,7 @@ class TinyToolCallingAgent:
         self.exit_stack = AsyncExitStack()
         self.model = self._init_model()
         self.system_prompt = SYSTEM_PROMPT
+        self.tools = []
 
     @staticmethod
     def _init_model():
@@ -60,25 +61,24 @@ class TinyToolCallingAgent:
 
         # List available tools
         response = await self.mcp_client_session.list_tools()
-        tools = response.tools
-        print("\nConnected to server with tools:", [tool.name for tool in tools])
+        self.tools = response.tools
+        print("\nConnected to server with tools:", [tool.name for tool in self.tools])
 
     async def process_query(self, query: str) -> str:
         """Process a query using model and available tools"""
-        # List available tools
-        response = await self.mcp_client_session.list_tools()
+        # Create messages
+        messages = [
+            {"role": "system", "content": self.system_prompt},
+            {"role": "user", "content": query},
+        ]
+
+        # List available tools for the model call
         tools = [
             {
                 "type": "function",
                 "function": {"name": tool.name, "description": tool.description, "parameters": tool.inputSchema},
             }
-            for tool in response.tools
-        ]
-
-        # Create messages
-        messages = [
-            {"role": "system", "content": self.system_prompt},
-            {"role": "user", "content": query},
+            for tool in self.tools
         ]
 
         # Initial model call with tools

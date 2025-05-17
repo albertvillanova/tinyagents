@@ -20,6 +20,7 @@ class TinyCodeAgent:
         self.exit_stack = AsyncExitStack()
         self.model = self._init_model()
         self.system_prompt = SYSTEM_PROMPT
+        self.tools = []
 
     @staticmethod
     def _init_model():
@@ -60,14 +61,13 @@ class TinyCodeAgent:
 
         # List available tools
         response = await self.mcp_client_session.list_tools()
-        tools = response.tools
-        print("\nConnected to server with tools:", [tool.name for tool in tools])
+        self.tools = response.tools
+        print("\nConnected to server with tools:", [tool.name for tool in self.tools])
 
     async def process_query(self, query: str) -> str:
         """Process a query using model and available tools"""
-        # List available tools
-        response = await self.mcp_client_session.list_tools()
-        tools_str = "\n".join([f"- {tool.name}: {tool.description}" for tool in response.tools])
+        # List available tools for the system prompt
+        tools_str = "\n".join([f"- {tool.name}: {tool.description}" for tool in self.tools])
 
         # Create messages
         messages = [
