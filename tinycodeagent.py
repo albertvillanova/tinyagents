@@ -3,7 +3,7 @@ import sys
 from contextlib import AsyncExitStack
 from typing import Optional
 
-from huggingface_hub import InferenceClient
+from huggingface_hub import AsyncInferenceClient
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
@@ -20,7 +20,7 @@ class TinyCodeAgent:
         # Initialize MCP client session and (LLM) model
         self.mcp_client_session: Optional[ClientSession] = None
         self.exit_stack = AsyncExitStack()
-        self.model = InferenceClient(model="Qwen/Qwen2.5-Coder-32B-Instruct", provider="hf-inference")
+        self.model = AsyncInferenceClient(model="Qwen/Qwen2.5-Coder-32B-Instruct", provider="hf-inference")
         self.system_prompt = SYSTEM_PROMPT
         self.tools = []
 
@@ -30,8 +30,7 @@ class TinyCodeAgent:
         Args:
             messages: List of messages to send to the model.
         """
-        loop = asyncio.get_running_loop()
-        return await loop.run_in_executor(None, lambda: self.model.chat_completion(messages, max_tokens=1000))
+        return await self.model.chat_completion(messages, max_tokens=1000)
 
     async def connect_to_server(self, server_script_path: str):
         """Connect to an MCP server.
